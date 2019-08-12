@@ -324,6 +324,8 @@ def globe():
 @click.pass_context
 def ls(ctx,df_id,offset,count,verbosity,json,text):
     global _cur_coll
+    global _most_recent_list_request
+    global _most_recent_list_count
     msg = auth.CollReadRequest()
     if df_id is not None:
         msg.id = resolve_coll_id(df_id)
@@ -339,9 +341,12 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     elif __verbosity == 0:
         msg.details = False
 
-    reply = _mapi.sendRecv( msg )
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
 
-    generic_reply_handler( reply, print_listing , __output_mode, __verbosity )
+    reply = _mapi.sendRecv(msg)
+
+    generic_reply_handler(reply, print_listing , __output_mode, __verbosity)
 
 
 @cli.command(help="Print or change current working collection")
@@ -352,6 +357,19 @@ def wc(df_id):
         _cur_coll = resolve_coll_id(df_id)
     else:
         click.echo(_cur_coll)
+
+
+@cli.command(help="List the next set of data replies from the DataFed server.")
+@click.option("-n", "--number",type=str,required=False,default=20,help="The number of data replies received." )
+def more(number):
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request.offset += _most_recent_list_count
+   # OR
+   # _most_recent_list_request.offset += _most_recent_list_request.count
+    _most_recent_list_request.count = number
+    _most_recent_list_count = number
+    reply = _mapi.sendRecv(_most_recent_list_request)
 
 # ------------------------------------------------------------------------------
 # Data command group
