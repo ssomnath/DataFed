@@ -318,7 +318,7 @@ def globe():
 # Collection listing/navigation commands
 @cli.command(help="List current collection, or collection specified by ID")
 @click.option("-o","--offset",default=0,help="List offset")
-@click.option("-c","--count",default=20,help="List count")
+@click.option("-c","--count",default=10,help="List count")
 @click.argument("df-id", required=False)
 @_global_output_options
 @click.pass_context
@@ -327,7 +327,7 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     msg = auth.CollReadRequest()
     if df_id is not None:
         msg.id = resolve_coll_id(df_id)
-    else:
+    elif df_id:
         msg.id = _cur_coll
     msg.count = count
     msg.offset = offset
@@ -338,6 +338,12 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
         msg.details = True
     elif __verbosity == 0:
         msg.details = False
+
+    global _most_recent_list_request
+    global _most_recent_list_count
+
+    #_most_recent_list_request = msg
+    #_most_recent_list_count = int(msg.count)
 
     reply = _mapi.sendRecv( msg )
 
@@ -352,20 +358,20 @@ def wc(df_id):
         _cur_coll = resolve_coll_id(df_id)
     else:
         click.echo(_cur_coll)
-'''
+
 @cli.command(help="List the next set of data replies from the DataFed server.")
-@click.option("-n", "--number",type=str,required=False,default=20,helped="The number of data replies received." )
+@click.option("-n", "--number",type=str,required=False,default=20,help="The number of data replies received." )
 def more(number):
     global _most_recent_list_request
     global _most_recent_list_count
     _most_recent_list_request.offset += _most_recent_list_count
    # OR 
-    _most_recent_list_request.offset += _most_recent_list_request.count
+   # _most_recent_list_request.offset += _most_recent_list_request.count
     _most_recent_list_request.count = number
     _most_recent_list_count = number
     reply = _mapi.sendRecv(_most_recent_list_request)
     
-'''
+
 # ------------------------------------------------------------------------------
 # Data command group
 @cli.command(cls=AliasedGroup,help="Data subcommands")
@@ -1585,7 +1591,19 @@ def print_allocation_data(alloc): #
 
 def output_checks(verbosity=None,json=None,text=None):
 
-    __output_mode, __verbosity = output_checks(verbosity,json,text)
+    if verbosity:
+        __verbosity = int(verbosity)
+    elif not verbosity:
+        global _verbosity
+        __verbosity = _verbosity
+
+    if json:
+        __output_mode = _OM_JSON
+    elif text:
+        __output_mode = _OM_TEXT
+    elif not json and not text:
+        global _output_mode
+        __output_mode = _output_mode
 
     return __output_mode,__verbosity
 
