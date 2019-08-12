@@ -339,12 +339,6 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     elif __verbosity == 0:
         msg.details = False
 
-    global _most_recent_list_request
-    global _most_recent_list_count
-
-    #_most_recent_list_request = msg
-    #_most_recent_list_count = int(msg.count)
-
     reply = _mapi.sendRecv( msg )
 
     generic_reply_handler( reply, print_listing , __output_mode, __verbosity )
@@ -358,19 +352,6 @@ def wc(df_id):
         _cur_coll = resolve_coll_id(df_id)
     else:
         click.echo(_cur_coll)
-
-@cli.command(help="List the next set of data replies from the DataFed server.")
-@click.option("-n", "--number",type=str,required=False,default=20,help="The number of data replies received." )
-def more(number):
-    global _most_recent_list_request
-    global _most_recent_list_count
-    _most_recent_list_request.offset += _most_recent_list_count
-   # OR 
-   # _most_recent_list_request.offset += _most_recent_list_request.count
-    _most_recent_list_request.count = number
-    _most_recent_list_count = number
-    reply = _mapi.sendRecv(_most_recent_list_request)
-    
 
 # ------------------------------------------------------------------------------
 # Data command group
