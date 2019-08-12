@@ -73,6 +73,12 @@ _OM_RETN = 2
 
 _output_mode = _OM_TEXT
 
+#_listing_replies = {
+ #   'ListingReply': 'print_listing', # or print_proj_listing
+  #  'UserDataReply': 'print_user_listing',
+   # ''
+#}
+
 # Used by CLI script to run interactively
 def _run():
 
@@ -329,7 +335,7 @@ def ls(ctx,df_id,offset,count,verbosity,json,text):
     msg = auth.CollReadRequest()
     if df_id is not None:
         msg.id = resolve_coll_id(df_id)
-    elif df_id:
+    elif not df_id:
         msg.id = _cur_coll
     msg.count = count
     msg.offset = offset
@@ -359,17 +365,26 @@ def wc(df_id):
         click.echo(_cur_coll)
 
 
-@cli.command(help="List the next set of data replies from the DataFed server.")
-@click.option("-n", "--number",type=str,required=False,default=20,help="The number of data replies received." )
-def more(number):
+@cli.command(help="List the next set of data replies from the DataFed server. Optional argument determines number of data replies received (else the previous count will be used)")
+@click.argument("count",type=int,required=False)
+@_global_output_options
+def more(count,verbosity,json,text):
     global _most_recent_list_request
     global _most_recent_list_count
     _most_recent_list_request.offset += _most_recent_list_count
    # OR
    # _most_recent_list_request.offset += _most_recent_list_request.count
-    _most_recent_list_request.count = number
-    _most_recent_list_count = number
+   # _most_recent_list_request.count = number
+    if count:
+       _most_recent_list_request.count = count
+       _most_recent_list_count = count
+    elif not count:
+        _most_recent_list_request.count = _most_recent_list_count
+    __output_mode, __verbosity = output_checks(verbosity, json, text)
     reply = _mapi.sendRecv(_most_recent_list_request)
+    for key in _listing_requests:
+        if isinstance(_most_recent_list_request, key):
+            generic_reply_handler(reply, _listing_requests[key] , __output_mode, __verbosity)
 
 # ------------------------------------------------------------------------------
 # Data command group
@@ -829,6 +844,10 @@ def query_list(offset,count, verbosity, json, text):
     msg.offset = offset
     msg.count = count
     __output_mode, __verbosity = output_checks(verbosity,json,text)
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
     reply = _mapi.sendRecv(msg)
     generic_reply_handler( reply, print_listing, __output_mode, __verbosity)
     #TODO: Figure out verbosity-dependent replies
@@ -841,6 +860,10 @@ def query_exec(df_id, verbosity, json, text):
     msg = auth.QueryExecRequest()
     msg.id = resolve_id(df_id)
     __output_mode, __verbosity = output_checks(verbosity,json,text)
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
     reply = _mapi.sendRecv(msg)
     generic_reply_handler( reply, print_listing, __output_mode, __verbosity)
 
@@ -902,6 +925,10 @@ def user_collab(offset,count, verbosity, json, text):
     msg.offset = offset
     msg.count = count
     __output_mode, __verbosity = output_checks(verbosity,json,text)
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
     reply = _mapi.sendRecv(msg)
 
     generic_reply_handler( reply, print_user_listing, __output_mode, __verbosity)
@@ -916,6 +943,11 @@ def user_all(offset,count, verbosity, json, text):
     msg.offset = offset
     msg.count = count
     __output_mode, __verbosity = output_checks(verbosity,json,text)
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
+
     reply = _mapi.sendRecv(msg)
 
     generic_reply_handler( reply, print_user_listing, __output_mode, __verbosity)
@@ -945,8 +977,10 @@ def project():
 @click.option("-o","--owner",is_flag=True,help="Include owned projects")
 @click.option("-a","--admin",is_flag=True,help="Include administered projects")
 @click.option("-m","--member",is_flag=True,help="Include membership projects")
+@click.option("-o","--offset",default=0,help="List offset")
+@click.option("-c","--count",default=20,help="List count")
 @_global_output_options
-def project_list(owner,admin,member, verbosity, json, text):
+def project_list(owner,admin,member,offset,count, verbosity, json, text):
     if not (owner or admin or member):
         owner = True
         admin = True
@@ -955,8 +989,13 @@ def project_list(owner,admin,member, verbosity, json, text):
     msg.as_owner = owner
     msg.as_admin = admin
     msg.as_member = member
+    msg.offset = offset
+    msg.count = count
     __output_mode, __verbosity = output_checks(verbosity,json,text)
-
+    global _most_recent_list_request
+    global _most_recent_list_count
+    _most_recent_list_request = msg
+    _most_recent_list_count = int(msg.count)
     reply = _mapi.sendRecv( msg )
     generic_reply_handler( reply, print_listing, __output_mode, __verbosity) #print listing prints "Alias" despite proj not having any
 
@@ -1586,6 +1625,20 @@ def print_allocation_data(alloc): #
                "{:<25} {:<50}".format('Path: ', alloc.path) + '\n' +
                "{:<25} {:<50}".format('ID: ', alloc.id) + '\n' +
                "{:<25} {:<50}".format('Sub Allocation: ', str(alloc.sub_alloc)))
+
+
+_listing_requests = {
+    auth.UserListAllRequest: print_user_listing,
+    auth.UserListCollabRequest: print_user_listing,
+    auth.QueryListRequest: print_listing,
+    auth.QueryExecRequest: print_listing,
+    auth.TopicListRequest: '',
+    auth.ProjectListRequest: print_proj_listing,
+    auth.CollListPublishedRequest: '',
+    auth.CollListRequest: '',
+    auth.RecordListByAllocRequest: '',
+    auth.CollReadRequest: print_listing,
+                     }
 
 
 def output_checks(verbosity=None,json=None,text=None):
