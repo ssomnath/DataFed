@@ -1,15 +1,14 @@
 {
-    "title":"Import Record #2",
-    "desc":"Nominal JSON file for testing record import.",
+    "title":"Import Record #4",
+    "desc":"Nominal JSON file for testing record import with two file arguments.",
     "keyw":"import,nominal,test",
-    "alias":"import-rec-2",
-    "doi":"imp/rec2",
-    "data_url":"https://import/record?id=2",
+    "alias":"import-rec-4",
+    "doi":"imp/rec4",
+    "data_url":"https://import/record?id=4",
     "md":{
         "rec":2,
         "x":21,
         "y":22,
         "z":23
-    },
-    "parent":"import-coll"
+    }
 }

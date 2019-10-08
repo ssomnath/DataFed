@@ -5,7 +5,6 @@
     "alias":"import-rec-5",
     "doi":"imp/rec5",
     "data_url":"https://import/record?id=5",
-    "parent":"p:dtest:import-coll",
     "md":{
         "rec":5,
         "x":51,
