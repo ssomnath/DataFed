@@ -103,16 +103,16 @@ function recordCreate( client, record, results ){
     g_lib.procInputParam( record, "doi", false, obj );
     g_lib.procInputParam( record, "data_url", false, obj );
 
-    if ( record.public )
+    if ( record.public ){
         obj.public = record.public;
+    }
 
     if ( record.md ){
-        obj.md = record.md; //JSON.parse( record.md );
+        obj.md = record.md;
         if ( Array.isArray( obj.md ))
             throw [g_lib.ERR_INVALID_PARAM,"Metadata cannot be an array"];
-
-        //console.log( "parsed:", obj.md );
     }
+
     if ( obj.doi || obj.data_url ){
         if ( !obj.doi || !obj.data_url )
             throw [g_lib.ERR_INVALID_PARAM,"DOI number and Data URL must specified together."];
@@ -183,7 +183,6 @@ function recordCreate( client, record, results ){
 router.post('/create', function (req, res) {
     try {
         var result = [];
-        console.log( "create data" );
 
         g_db._executeTransaction({
             collections: {
@@ -954,11 +953,23 @@ router.get('/search', function (req, res) {
         if ( req.queryParams.use_shared_projects ){
             params.projs = g_lib.projectsWithClientACLs( client._id, true );
         }
-        console.log("params:",params);
+
+        if ( req.queryParams.offset )
+            params.offset = req.queryParams.offset;
+        else
+            params.offset = 0;
+
+        if ( req.queryParams.count ){
+            params.count = Math.min(req.queryParams.count,1000-params.offset);
+        }else{
+            params.count = Math.min(50,1000-params.offset);
+        }
+
+        //console.log("params:",params);
 
         var results = g_db._query( req.queryParams.query, params ).toArray();
 
-        console.log("results:",results.length);
+        //console.log("results:",results.length);
 
         res.send( results );
     } catch( e ) {
@@ -970,6 +981,8 @@ router.get('/search', function (req, res) {
 .queryParam('use_client', joi.bool().required(), "Query uses client param")
 .queryParam('use_shared_users', joi.bool().required(), "Query uses shared users param")
 .queryParam('use_shared_projects', joi.bool().required(), "Query uses shared projects param")
+.queryParam('offset', joi.number().integer().min(0).max(999).optional(), "Offset")
+.queryParam('count', joi.number().integer().min(1).max(1000).optional(), "Count")
 .summary('Find all data records that match query')
 .description('Find all data records that match query');
 
@@ -978,7 +991,7 @@ router.get('/delete', function (req, res) {
         g_db._executeTransaction({
             collections: {
                 read: ["u","uuid","accn","d"],
-                write: ["d","a","owner","item","acl","alias","loc","alloc","p","t","top","dep"]
+                write: ["d","a","owner","item","acl","alias","loc","lock","alloc","p","t","top","dep"]
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );

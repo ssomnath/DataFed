@@ -131,6 +131,10 @@ function makeBrowserTab(){
             });
         }
 
+        if ( inst.cur_query ){
+            inst.execQuery( inst.cur_query );
+        }
+
         if ( inst.focus_node_id ){
             if ( a_ids && a_data )
                 inst.graphUpdate( a_ids, a_data );
@@ -529,14 +533,10 @@ function makeBrowserTab(){
         }
 
         var msg = "Delete selected items?";
-        if ( coll.length || proj.length ){
-            msg += " Note that this action will delete all data records and collections contained within selected ";
-            if ( coll.length && proj.length )
-                msg += "collection(s) and project(s).";
-            else if ( coll.length )
-                msg += "collection(s).";
-            else
-                msg += "project(s).";
+        if ( proj.length ){
+            msg += " Note that this action will delete all data records and collections contained within selected project(s)";
+        } else if ( coll.length ){
+            msg += " Note that this action will delete data records contained within the selected collection(s) that are not linked elsewhere.";
         }
 
         dlgConfirmChoice( "Confirm Deletion", msg, ["Delete","Cancel"], function( choice ){
@@ -1560,7 +1560,7 @@ function makeBrowserTab(){
                     fields.title = item.title;
 
                     var qry = JSON.parse( item.query );
-                    fields.descr_html = "<table class='info_table'><col width='20%'><col width='80%'><tr><td><u>Query Field</u></td><td><u>Value</u></td></tr><tr><td>ID/Alias:</td><td>"+(qry.id?qry.id:"---")+"</td></tr><tr><td>Text:</td><td>"+(qry.quick?qry.quick:"---")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"---")+"</td></tr></table>";
+                    fields.descr_html = "<table class='info_table'><col width='20%'><col width='80%'><tr><td><u>Query Field</u></td><td><u>Value</u></td></tr><tr><td>ID/Alias:</td><td>"+(qry.id?qry.id:"---")+"</td></tr><tr><td>Text:</td><td>"+(qry.text?qry.text:"---")+"</td></tr><tr><td>Metadata:</td><td>"+(qry.meta?qry.meta:"---")+"</td></tr></table>";
 
                     html = "<table class='info_table'><col width='20%'><col width='80%'>";
                     html += "<tr><td>Owner:</td><td>" + item.owner.substr(2) + "</td></tr>";
@@ -1785,6 +1785,10 @@ function makeBrowserTab(){
             console.log( "qry res:", ok, items );
             if ( ok ){
                 //var srch_node = inst.data_tree.getNodeByKey("search");
+
+                // Set this query as current for refresh
+                inst.cur_query = query;
+
                 var results = [];
                 if ( items.length > 0 ){
                     setStatusText( "Found " + items.length + " result" + (items.length==1?"":"s"));
@@ -1817,7 +1821,7 @@ function makeBrowserTab(){
         var query = {};
         var tmp = $("#text_query").val();
         if ( tmp )
-            query.quick = tmp;
+            query.text = tmp;
 
         tmp = $("#id_query").val();
         if ( tmp )
@@ -1893,9 +1897,11 @@ function makeBrowserTab(){
     }
 
     this.searchDirect = function(){
+        $("#run_qry_btn").removeClass("ui-state-error")
+
         var query = parseQuickSearch();
 
-        if ( query.scopes.length && ( query.quick || query.meta || query.id ))
+        if ( query.scopes.length && ( query.text || query.meta || query.id ))
             inst.execQuery( query );
     }
 
@@ -3475,9 +3481,19 @@ function makeBrowserTab(){
 
     $(document.body).on('click', '.browse-reload' , inst.actionReloadSelected );
 
-    $("#id_query,#text_query,#meta_query").on('keyup', function (e) {
-        if (e.keyCode == 13)
+    $("#id_query,#text_query,#meta_query").on('keypress', function (e) {
+        if (e.keyCode == 13){
             inst.searchDirect();
+        }
+    });
+
+    $("#id_query,#text_query,#meta_query").on( "input", function(e) {
+        $("#run_qry_btn").addClass("ui-state-error")
+    });
+
+    $("#btn_srch_refresh").on("click", function(){
+        if ( inst.cur_query )
+            inst.execQuery( inst.cur_query );
     });
 
     if ( g_user.isRepoAdmin ){
@@ -3721,6 +3737,7 @@ function makeBrowserTab(){
     });
 
     $(".search-results-close").click( function(){
+        inst.cur_query = null;
         $("#search_results_tree").fancytree("getTree").clear();
         $('[href="#tab-search-results"]').closest('li').hide();
         $( "#data-tabs" ).tabs({ active: 0 });
