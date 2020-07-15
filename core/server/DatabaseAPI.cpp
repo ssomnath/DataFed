@@ -2618,9 +2618,9 @@ DatabaseAPI::setNoteData( NoteData * a_note, const libjson::Value::Object & a_ob
 }
 
 void
-DatabaseAPI::taskLoadReady( libjson::Value & a_result )
+DatabaseAPI::taskLoadRunnable( libjson::Value & a_result )
 {
-    dbGet( "task/reload", {}, a_result );
+    dbGet( "task/runnable", {}, a_result );
 }
 
 

@@ -74,7 +74,7 @@ TaskWorker::workerThread()
 
                 if ( obj.has( "step" ))
                     step = obj.asNumber();
-                else if ( cmd != TC_STOP )
+                else if ( cmd > TC_FINISHED )
                     EXCEPT(1,"Reply missing step value" );
 
                 switch ( cmd )
@@ -94,7 +94,14 @@ TaskWorker::workerThread()
                 case TC_ALLOC_DELETE:
                     retry = cmdAllocDelete( params );
                     break;
-                case TC_STOP:
+                case TC_RESCHEDULE:
+                    // Init has completed and task is ready to run
+                    m_mgr.rescheduleTask( m_task );
+                    break;
+                case TC_BLOCKED:
+                    // Init has completed and task is blocked
+                    break;
+                case TC_FINISHED:
                     if ( obj.has( "new_tasks" ))
                     {
                         DL_DEBUG("found " << obj.value().size() << " new ready tasks." );
@@ -107,7 +114,7 @@ TaskWorker::workerThread()
                 //DL_DEBUG("sleep");
                 //sleep(10);
 
-                if ( cmd == TC_STOP )
+                if ( cmd <= TC_FINISHED )
                     break;
 
                 if ( retry )

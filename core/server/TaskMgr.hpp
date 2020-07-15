@@ -38,22 +38,21 @@ private:
 
     void        maintenanceThread();
     void        newTasks( const libjson::Value & a_tasks );
-    void        addNewTaskAndScheduleWorker( const std::string & a_task_id );
-    void        retryTaskAndScheduleWorker( Task * a_task );
+    void        createTaskScheduleWorker( const std::string & a_task_id );
+    void        taskScheduleWorker( Task * a_task );
 
     void        wakeNextWorker();
     Task *      getNextTask( ITaskWorker * a_worker );
+    void        rescheduleTask( Task * a_task );
     bool        retryTask( Task * a_task );
     void        purgeTaskHistory() const;
 
 
     Config &                            m_config;
-    std::deque<Task*>                   m_tasks_ready;
+    std::deque<Task*>                   m_tasks_ready; // Includes tasks in either INIT or READY states
     std::multimap<timepoint_t,Task*>    m_tasks_retry;
-    //std::map<std::string,Task*>         m_tasks_running;
     std::mutex                          m_worker_mutex;
     std::vector<ITaskWorker*>           m_workers;
-    //std::list<TaskWorker*>              m_ready_workers;
     ITaskWorker *                       m_worker_next;
     std::thread *                       m_maint_thread;
     std::mutex                          m_maint_mutex;

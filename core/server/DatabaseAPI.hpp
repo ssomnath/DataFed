@@ -143,7 +143,7 @@ public:
     void annotationListBySubject( const Auth::AnnotationListBySubjectRequest & a_request, Auth::AnnotationDataReply & a_reply );
     void annotationPurge( uint32_t a_age_sec );
 
-    void taskLoadReady( libjson::Value & a_result );
+    void taskLoadRunnable( libjson::Value & a_result );
     void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step = 0, std::string * a_err_msg = 0 );
     void taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply );
 

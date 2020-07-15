@@ -39,6 +39,7 @@ public:
     };
 
     virtual Task *      getNextTask( ITaskWorker * a_worker ) = 0;
+    virtual void        rescheduleTask( Task * a_task ) = 0;
     virtual bool        retryTask( Task * a_task ) = 0;
     virtual void        newTasks( const libjson::Value & a_tasks ) = 0;
 };

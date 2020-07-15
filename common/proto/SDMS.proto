@@ -326,22 +326,24 @@ enum TaskType
 
 enum TaskStatus
 {
-    TS_INIT         = 0;
-    TS_BLOCKED      = 1;
-    TS_READY        = 2;
-    TS_RUNNING      = 3;
+    TS_INIT         = 0; // Can be scheduled
+    TS_READY        = 1; // Can be scheduled
+    TS_BLOCKED      = 2; // Will be scheduled when blocking tasks are cleared
+    TS_RUNNING      = 3; // Running currently
     TS_SUCCEEDED    = 4;
-    TS_FAILED       = 5;
+    TS_FAILED       = 5; // Permanent failure (transient failures will be retried several times)
 }
 
 enum TaskCommand
 {
-    TC_STOP                 = 0;
-    TC_RAW_DATA_TRANSFER    = 1;
-    TC_RAW_DATA_DELETE      = 2;
-    TC_RAW_DATA_UPDATE_SIZE = 3;
-    TC_ALLOC_CREATE         = 4;
-    TC_ALLOC_DELETE         = 5;
+    TC_RESCHEDULE           = 1; // Task is ready but should be rescheduled to back of ready queue
+    TC_BLOCKED              = 2; // Task is blocked and will be processed after blocking taks(s) complete
+    TC_FINISHED             = 3; // Task is finished and can be finalized/removed
+    TC_RAW_DATA_TRANSFER    = 4;
+    TC_RAW_DATA_DELETE      = 5;
+    TC_RAW_DATA_UPDATE_SIZE = 6;
+    TC_ALLOC_CREATE         = 7;
+    TC_ALLOC_DELETE         = 8;
 }
 
 enum Encryption

@@ -48,7 +48,7 @@ TaskMgr::TaskMgr():
     // Load ready & running tasks and schedule workers
     DatabaseAPI  db( m_config.db_url, m_config.db_user, m_config.db_pass );
     libjson::Value tasks;
-    db.taskLoadReady( tasks );
+    db.taskLoadRunnable( tasks );
     newTasks( tasks );
 }
 
@@ -135,7 +135,7 @@ TaskMgr::maintenanceThread()
             {
                 DL_INFO( "MAINT: rescheduling failed task " << t->second->task_id );
 
-                retryTaskAndScheduleWorker( t->second );
+                taskScheduleWorker( t->second );
                 t = m_tasks_retry.erase( t );
             }
             else
@@ -185,7 +185,7 @@ TaskMgr::newTask( const std::string & a_task_id )
 
     lock_guard<mutex> lock( m_worker_mutex );
 
-    addNewTaskAndScheduleWorker( a_task_id );
+    createTaskScheduleWorker( a_task_id );
 }
 
 /**
@@ -212,7 +212,7 @@ TaskMgr::newTasks( const libjson::Value & a_tasks )
 
         for ( ; t != arr.end(); t++ )
         {
-            addNewTaskAndScheduleWorker( t->asString() );
+            createTaskScheduleWorker( t->asString() );
         }
     }
     catch(...)
@@ -231,7 +231,7 @@ TaskMgr::newTasks( const libjson::Value & a_tasks )
  * NOTE: Takes ownership of JSON values leaving NULL values in place.
  */
 void
-TaskMgr::addNewTaskAndScheduleWorker( const std::string & a_task_id )
+TaskMgr::createTaskScheduleWorker( const std::string & a_task_id )
 {
     // TODO Add logic to limit max number of ready tasks in memory
 
@@ -247,7 +247,7 @@ TaskMgr::addNewTaskAndScheduleWorker( const std::string & a_task_id )
 }
 
 void
-TaskMgr::retryTaskAndScheduleWorker( Task * a_task )
+TaskMgr::taskScheduleWorker( Task * a_task )
 {
     m_tasks_ready.push_back( a_task );
 
@@ -336,6 +336,12 @@ TaskMgr::getNextTask( ITaskWorker * a_worker )
     return task;
 }
 
+void
+TaskMgr::rescheduleTask( Task * a_task )
+{
+    DL_DEBUG( "Reschedule task " << a_task->task_id );
+    taskScheduleWorker( a_task );
+}
 
 /**
  * @brief Submit a task with a transient failure for later retry
