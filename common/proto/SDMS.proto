@@ -326,11 +326,12 @@ enum TaskType
 
 enum TaskStatus
 {
-    TS_BLOCKED      = 0;
-    TS_READY        = 1;
-    TS_RUNNING      = 2;
-    TS_SUCCEEDED    = 3;
-    TS_FAILED       = 4;
+    TS_INIT         = 0;
+    TS_BLOCKED      = 1;
+    TS_READY        = 2;
+    TS_RUNNING      = 3;
+    TS_SUCCEEDED    = 4;
+    TS_FAILED       = 5;
 }
 
 enum TaskCommand
