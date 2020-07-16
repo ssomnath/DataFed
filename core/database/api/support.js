@@ -48,12 +48,13 @@ module.exports = ( function() {
     obj.TT_PROJ_DEL         = 9;
     obj.TT_DATA_EXPORT      = 10;
 
-    obj.TS_BLOCKED          = 0;
+    obj.TS_INIT             = 0;
     obj.TS_READY            = 1;
     obj.TS_RUNNING          = 2;
-    obj.TS_SUCCEEDED        = 3;
-    obj.TS_FAILED           = 4;
-    obj.TS_COUNT            = 5;
+    obj.TS_BLOCKED          = 3;
+    obj.TS_SUCCEEDED        = 4;
+    obj.TS_FAILED           = 5;
+    obj.TS_COUNT            = 6;
 
     obj.TC_STOP                 = 0;
     obj.TC_RAW_DATA_TRANSFER    = 1;

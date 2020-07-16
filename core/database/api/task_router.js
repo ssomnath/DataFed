@@ -60,11 +60,6 @@ router.get('/run', function (req, res) {
                 task = g_db.task.document( req.queryParams.task_id );
                 run_func = g_tasks.taskGetRunFunc( task );
 
-                // If the last step is about to run, add exclusive lock, block access to transaction
-                //if ( req.queryParams.step != undefined && req.queryParams.step == task.steps - 2 ){
-                //    exc = ["lock","block"];
-                //}
-
                 // There should never be a wr-wr conflict here b/c the core server serializes task operations
                 if ( task.status == g_lib.TS_READY ){
                     g_tasks.taskReady( task._id );
@@ -114,6 +109,10 @@ router.get('/run', function (req, res) {
                     task.step = -task.step;
                     task.error = String(err);
                     g_db.task.update( task._id, { step: task.step, error: task.error, ut: Math.floor( Date.now()/1000 ) }, { waitForSync: true });
+                }else if ( task.step == 0 ){
+                    console.log("Exception in initialization" );
+                    result = { cmd: g_lib.TC_STOP, params: g_tasks.taskComplete( task._id, false, "Initialization failed: " + err )};
+                    break;
                 }else{
                     console.log("Exception in rollback" );
                     // Exception on roll-back, abort and return next tasks to process
@@ -139,11 +138,7 @@ router.get('/run', function (req, res) {
 .summary('Run task')
 .description('Run an initialized task. Step param confirms last command. Error message indicates external permanent failure.');
 
-/** @brief Clean-up a task and remove it from task dependency graph
- *
- * Removes dependency locks and patches task dependency graph (up and down
- * stream). Returns list of new runnable tasks if available.
- */
+/*
 router.post('/abort', function (req, res) {
     try {
         var result = [];
@@ -170,7 +165,7 @@ router.post('/abort', function (req, res) {
 .body( joi.string().required(), 'Parameters' )
 .summary('Abort a schedule task')
 .description('Abort a schedule task and return list of new runnable tasks.');
-
+*/
 
 router.post('/delete', function (req, res) {
     try{
@@ -241,17 +236,16 @@ router.get('/list', function (req, res) {
 .description('List task records.');
 
 
-router.get('/reload', function (req, res) {
+router.get('/runnable', function (req, res) {
     try{
-        var result = [];
+        var result;
 
         g_db._executeTransaction({
             collections: {
-                read: ["u","uuid","accn"],
-                exclusive: ["task","lock","block"]
+                read: ["task"]
             },
             action: function() {
-                result = g_db._query( "for i in task filter i.status > 0 and i.status < 3 sort i.status desc return i._id" ).toArray();
+                result = g_db._query( "for i in task filter i.status < 3 let r = (i.status != 2) sort r, i.ct return i._id" );
             }
         });
 
@@ -260,8 +254,9 @@ router.get('/reload', function (req, res) {
         g_lib.handleException( e, res );
     }
 })
-.summary('Reload ready/running task records')
-.description('Reload ready/running task records.');
+.summary('Get runnable/running task records')
+.description('Get runnable/running task records with running tasks first, ready/init tasks in original submission order.');
+
 
 router.get('/purge', function (req, res) {
     try{

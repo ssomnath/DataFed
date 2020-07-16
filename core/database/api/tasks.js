@@ -125,9 +125,13 @@ var tasks_func = function() {
 
     // ----------------------- DATA GET ----------------------------
 
-    obj.taskInitDataGet = function( a_client, a_path, a_encrypt, a_res_ids, a_orig_fname, a_check ){
+    obj.taskInitDataGet = function( a_client, a_path, a_encrypt, a_ids, a_orig_fname, a_check ){
         console.log("taskInitDataGet");
 
+        var state = { path: a_path, encrypt: a_encrypt, orig_fname: a_orig_fname, res_ids: a_ids };
+        var task = obj._createTask( a_client._id, g_lib.TT_DATA_GET, 2, state );
+
+        /*
         var result = g_proc.preprocessItems( a_client, null, a_res_ids, g_lib.TT_DATA_GET );
 
         if ( result.glob_data.length > 0 && !a_check ){
@@ -147,7 +151,7 @@ var tasks_func = function() {
             }
 
             result.task = task;
-        }
+        }*/
 
         return result;
     };
@@ -162,7 +166,19 @@ var tasks_func = function() {
             return;
 
         if ( a_task.step == 0 ){
-            console.log("taskRunDataGet - do setup");
+            console.log("taskRunDataGet - initialize");
+            const client = g_lib.getUserFromClientID( a_task.client );
+            var i, id, ids = [];
+
+            for ( i in req.body.ids ){
+                id = g_lib.resolveDataCollID( req.body.ids[i], client );
+                ids.push( id );
+            }
+
+            var preproc_res = g_proc.preprocessItems( client, null, ids, g_lib.TT_DATA_GET );
+
+            if ( preproc_res.glob_data.length > 0 ){
+    
             obj._transact( function(){
                 // Generate transfer steps
                 state.xfr = obj._buildTransferDoc( g_lib.TT_DATA_GET, state.glob_data, state.path, state.orig_fname );

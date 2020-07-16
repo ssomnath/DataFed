@@ -1248,14 +1248,7 @@ router.post('/delete', function (req, res) {
             },
             action: function() {
                 const client = g_lib.getUserFromClientID( req.queryParams.client );
-                var i, id, ids = [];
-
-                for ( i in req.body.ids ){
-                    id = g_lib.resolveDataCollID( req.body.ids[i], client );
-                    ids.push( id );
-                }
-
-                var result = g_tasks.taskInitRecCollDelete( client, ids );
+                var result = g_tasks.taskInitRecCollDelete( client, req.body.ids );
 
                 res.send(result);
             }
