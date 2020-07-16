@@ -328,8 +328,8 @@ enum TaskStatus
 {
     TS_INIT         = 0; // Can be scheduled
     TS_READY        = 1; // Can be scheduled
-    TS_BLOCKED      = 2; // Will be scheduled when blocking tasks are cleared
-    TS_RUNNING      = 3; // Running currently
+    TS_RUNNING      = 2; // Running currently
+    TS_BLOCKED      = 3; // Will be scheduled when blocking tasks are cleared
     TS_SUCCEEDED    = 4;
     TS_FAILED       = 5; // Permanent failure (transient failures will be retried several times)
 }

@@ -146,6 +146,7 @@ TaskWorker::workerThread()
 }
 
 
+/*
 void
 TaskWorker::abortTask( const std::string & a_msg )
 {
@@ -172,6 +173,7 @@ TaskWorker::abortTask( const std::string & a_msg )
         DL_ERROR("TaskWorker::abortTask - EXCEPTION!");
     }
 }
+*/
 
 
 bool

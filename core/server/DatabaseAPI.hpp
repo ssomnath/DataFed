@@ -145,7 +145,7 @@ public:
 
     void taskLoadRunnable( libjson::Value & a_result );
     void taskRun( const std::string & a_task_id, libjson::Value & a_task_reply, int * a_step = 0, std::string * a_err_msg = 0 );
-    void taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply );
+    //void taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply );
 
     void taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );
     void taskInitDataPut( const Auth::DataPutRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result );

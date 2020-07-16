@@ -2638,6 +2638,7 @@ DatabaseAPI::taskRun( const std::string & a_task_id, libjson::Value & a_task_rep
 }
 
 
+/*
 void
 DatabaseAPI::taskAbort( const std::string & a_task_id, const std::string & a_msg, libjson::Value & a_task_reply )
 {
@@ -2646,7 +2647,7 @@ DatabaseAPI::taskAbort( const std::string & a_task_id, const std::string & a_msg
 
     dbPost( "task/abort", {{"task_id",a_task_id}}, &body, a_task_reply );
 }
-
+*/
 
 void
 DatabaseAPI::taskInitDataGet( const Auth::DataGetRequest & a_request, Auth::DataGetPutReply & a_reply, libjson::Value & a_result )
